@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset=utf-8>
+		<title>NestedModels_v2</title>
+		<link rel="shortcut icon" href="#" />
+		<style>
+			body {
+				margin: 0;
+				overflow: auto;
+			}
+			#resizer {
+				float: left;
+				overflow: hidden;
+				resize: both;
+				width: 600px;
+				height: 600px;
+			}
+			button {
+				cursor: pointer;
+			}
+			help {
+				padding: 5px;
+				margin: 20px;
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				background-color: lightgray;
+				border: 2px solid black;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div style="width: 100%;">
+			<div style="text-align: center; font-size: x-large;">NestedModels_v2</div>
+		</div>
+		<div id="resizer">
+			<canvas id="pixels" width=600 height=600></canvas>
+		</div>
+		<div style="float: left; padding: 2px;">
+			<button onclick="location.href = 'NestedModels_v1.html';">NestedModels_v1</button>
+			<button onclick="location.href = 'NestedModels_v1a.html';"	>NestedModels_v1a</button>
+			<button onclick="location.href = 'NestedModels_v2.html';"hidden>NestedModels_v2</button>
+			<button onclick="location.href = 'NestedPrisms_v1.html';"	>NestedPrisms_v1</button>
+			<button onclick="location.href = 'NestedPrisms_v2.html';"	>NestedPrisms_v2</button>
+            <button onclick="location.href = 'NestedPrisms_v3.html';">NestedPrisms_v3</button>
+		</div>
+		<div style="margin: 2px; position: absolute; top: 0; right: 0;">
+			<button style="font-size: medium;" onclick="location = location.origin + '/examples/';">Back</button>
+		</div>
+		<help>
+			Use the 'p' to pause the animation.<br>
+			Use the 'f' key to display the next frame.<br>
+			*Drag and drop .js file over run_client.cmd to create the .ppm files for each frame in the offline version (must have Nodejs installed).<br>
+		</help>
+
+		<script src="NestedModels_v2.js" type="module"></script>
+	</body>
+</html>
