@@ -22,18 +22,31 @@
 */
 export class Vertex {
 
-    /**
-      Construct a new {@code Vertex} with the given homogeneous coordinates.
+   /**
+   Construct a new {@code Vertex} with the given homogeneous coordinates.
 
-      @param x  x-coordinate of the new {@code Vertex}
-      @param y  y-coordinate of the new {@code Vertex}
-      @param z  z-coordinate of the new {@code Vertex}
-      @param w  w-coordinate of the new {@code Vertex}
-    */
-    constructor(x, y, z, w = 1.0) {
-        this.x = x;
-        this.y = y;
-        this.z = z;
-        this.w = w;
-    }
+   @param x  x-coordinate of the new {@code Vertex}
+   @param y  y-coordinate of the new {@code Vertex}
+   @param z  z-coordinate of the new {@code Vertex}
+   @param w  w-coordinate of the new {@code Vertex}
+   */
+   constructor(x, y, z, w = 1.0) {
+      this.x = x;
+      this.y = y;
+      this.z = z;
+      this.w = w;
+   }
+
+   set(v) {
+      this.x = v.x;
+      this.y = v.y;
+      this.z = v.z;
+      this.w = v.w;
+   }
+
+   setPoint(x,y,z){
+      this.x = x;
+      this.y = y;
+      this.z = z;
+   }
 }

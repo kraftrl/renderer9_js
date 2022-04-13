@@ -37,90 +37,81 @@ var timer = null;
 var scene = new Scene();
 
 // Create a two-dimensional array of Positions holding Models.
-var position = [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]];
+var models = [[null, null, null, null, null], [null, null, null, null, null], [null, null, null, null, null]];
 
 // row 0
-position[0][0] = new Position(new ObjSimpleModel("assets/great_rhombicosidodecahedron.obj"));
-ModelShading.setColor(position[0][0].model, Color.Red);
+models[0][0] = new Box(1.0, 1.0, 1.0);//new ObjSimpleModel("assets/great_rhombicosidodecahedron.obj");
+ModelShading.setColor(models[0][0], Color.Red);
 
-position[0][1] = new Position(new ConeFrustum(0.5, 1.0, 1.0, 10, 10));
-ModelShading.setColor(position[0][1].model, Color.Orange);
+models[0][1] = new ConeFrustum(0.5, 1.0, 1.0, 10, 10);
+ModelShading.setColor(models[0][1], Color.Orange);
 
-position[0][2] = new Position(new Box(1.0, 1.0, 1.0));
-ModelShading.setColor(position[0][2].model, Color.Gray);
+models[0][2] = new Box(1.0, 1.0, 1.0);
+ModelShading.setColor(models[0][2], Color.Gray);
 
-position[0][3] = new Position(new Axes3D(0, 1, 0, 1, 0, 1, Color.Red, Color.Green, Color.Blue));
+models[0][3] = new Axes3D(0, 1, 0, 1, 0, 1, Color.Red, Color.Green, Color.Blue);
 
-position[0][4] = new Position(new Sphere(1.0, 30, 30));
-ModelShading.setColor(position[0][4].model, Color.Gray);
+models[0][4] = new Sphere(1.0, 30, 30);
+ModelShading.setColor(models[0][4], Color.Gray);
 
 // row 1
-position[1][0] = new Position(new Cylinder(0.5, 1.0, 30, 30));
-ModelShading.setColor(position[1][0].model, Color.Blue);
+models[1][0] = new Cylinder(0.5, 1.0, 30, 30);
+ModelShading.setColor(models[1][0], Color.Blue);
 
-position[1][1] = new Position(new ObjSimpleModel("assets/horse.obj"));
-ModelShading.setColor(position[1][1].model, Color.Pink);
+models[1][1] = new Box(1.0, 1.0, 1.0);//new ObjSimpleModel("assets/horse.obj");
+ModelShading.setColor(models[1][1], Color.Pink);
 
-position[1][2] = new Position(new GRSModel("assets/grs/vinci.grs"));
-ModelShading.setColor(position[1][2].model, Color.Blue);
+models[1][2] = new Box(1.0, 1.0, 1.0);//new GRSModel("assets/grs/vinci.grs");
+ModelShading.setColor(models[1][2], Color.Blue);
 
-position[1][3] = new Position(new Tetrahedron());
-ModelShading.setColor(position[1][3].model, Color.Cyan);
+models[1][3] = new Tetrahedron();
+ModelShading.setColor(models[1][3], Color.Cyan);
 
-position[1][4] = new Position(new ObjSimpleModel("assets/small_rhombicosidodecahedron.obj"));
-ModelShading.setColor(position[1][4].model, Color.Magenta);
+models[1][4] = new Box(1.0, 1.0, 1.0);//new ObjSimpleModel("assets/small_rhombicosidodecahedron.obj");
+ModelShading.setColor(models[1][4], Color.Magenta);
 
 // row 2
-position[2][0] = new Position(new TriangularPrism(0.5, 1.0, 0.5, 8.0, true));
-ModelShading.setColor(position[2][0].model, Color.Green);
+models[2][0] = new TriangularPrism(0.5, 1.0, 0.5, 8.0, true);
+ModelShading.setColor(models[2][0], Color.Green);
 
-position[2][1] = new Position(new GRSModel("assets/grs/bronto.grs"));
-ModelShading.setColor(position[2][1].model, Color.Red);
+models[2][1] = new Box(1.0, 1.0, 1.0);//new GRSModel("assets/grs/bronto.grs");
+ModelShading.setColor(models[2][1], Color.Red);
 
-position[2][2] = new Position(new Torus(0.75, 0.25, 30, 30));
-ModelShading.setRandomColors(position[2][2].model);
+models[2][2] = new Torus(0.75, 0.25, 30, 30);
+ModelShading.setRandomColors(models[2][2]);
 
-position[2][3] = new Position(new Octahedron());
-ModelShading.setColor(position[2][3].model, Color.Blue);
+models[2][3] = new Octahedron();
+ModelShading.setColor(models[2][3], Color.Blue);
 
-position[2][4] = new Position(new Cone(0.5, 1.0, 30, 30));
-ModelShading.setColor(position[2][4].model, Color.Yellow);
+models[2][4] = new Cone(0.5, 1.0, 30, 30);
+ModelShading.setColor(models[2][4], Color.Yellow);
 
 // Create x, y and z axes
-var xyzAxes = new Position(new Axes3D(6, -6, 6, 0, 7, -7,  Color.Red, Color.Red, Color.Red));
+var xyzAxes = new Axes3D(6, -6, 6, 0, 7, -7,  Color.Red, Color.Red, Color.Red);
 
-// Create a "top level" Position that holds a horizontal coordinate plane model.
-var topLevel_p = new Position(new PanelXZ(-6, 6, -7, 7));
-ModelShading.setColor(topLevel_p.model, Color.Gray);
+// Create a "top level" Model that holds a horizontal coordinate plane.
+var topLevel = new PanelXZ(-6, 6, -7, 7);
+ModelShading.setColor(topLevel, Color.Gray);
 
-// Add the other Positions as nested Positions of the top level Position.
-for (var i = 0; i < position.length; i++)
-    for (var j = 0; j < position[i].length; j++) {
-        topLevel_p.addNestedPosition([position[i][j]]);
+// Add all the models as nested models of the top level Model
+for (var i = 0; i < models.length; i++)
+    for (var j = 0; j < models[i].length; j++) {
+        topLevel.nestedModels.push(models[i][j]);
     }
-topLevel_p.addNestedPosition([xyzAxes]);
+topLevel.nestedModels.push(xyzAxes);
 
-// Add the top level Position to the Scene.
-scene.addPosition( [topLevel_p] );
+// Add the top level Model to the Scene.
+var topLevel_p = new Position(topLevel);
+scene.addPosition([topLevel_p]);
 
-// Place the top level Position in front of the camera.
-topLevel_p.matrix = Matrix.translate(0, -3, -10);
-
-// Place each model in the xz-plane.
-for (var i = 0; i < position.length; i++) {
-    for (var j = 0; j < position[i].length; j++) {
-        // Place the model where it belongs in the xz-plane.
-        position[i][j].matrix.mult( Matrix.translate(4-4*i, 0, 6-3*j) );
-    }
-}
-
-// Set up the camera's view frustum.
+// // Set up the camera's view frustum.
 var right  = 2.0;
 var left   = -right;
 var top    = 1.0;
 var bottom = -top;
 var near   = 1.0;
 scene.camera.projPerspective(left, right, bottom, top, near);
+
 /*
 var fov    = 90.0;
 var aspect = 2.0;
@@ -128,7 +119,7 @@ var near   = 1.0;
 scene.camera.projPerspective(fov, aspect, near);
 */
 
-displayNextFrame();
+//displayNextFrame();
 
 function display(){
 	const resizer = document.getElementById("resizer");
@@ -154,19 +145,28 @@ function displayNextFrame() {
     }, 1000/30);
 }
 
+var k = 0;
 function rotateModels() {
-    // Rotate the top level Position one degree (accumulate the rotations).
-    topLevel_p.matrix.mult( Matrix.rotateY(1) );
-    //topLevel_p.matrix = Matrix.rotateZ(i).mult(Matrix.translate(0,0,20));
+    // Place the top level Position in front of the camera.
+    topLevel_p.matrix = Matrix.translate(0, -3, -10);
+    // Rotate it.
+    topLevel_p.matrix.mult( Matrix.rotateY(k) );
 
-    // Rotate each model on its own axis.
-    for (var i = 0; i < position.length; i++) {
-        for (var j = 0; j < position[i].length; j++) {
-            // Rotate the model on its own axis (accumulate the rotations).
-            position[i][j].matrix.mult( Matrix.rotateX(3) );
-            position[i][j].matrix.mult( Matrix.rotateY(3) );
-        }
+    // Place each model in the xz-plane and
+    // also rotate each model on its own axis.
+    for (var i = 0; i < models.length; i++)
+    {
+       for (var j = 0; j < models[i].length; j++)
+       {
+          // Place the model where it belongs in the xz-plane
+          // and rotate the model on its own axis.
+          models[i][j].nestedMatrix = Matrix.translate(4-4*i, 0, 6-3*j)
+                                       .timesMatrix(Matrix.rotateX(3*k))
+                                       .timesMatrix(Matrix.rotateY(3*k));
+       }
     }
+
+    if(k === 360) {k = 0;} else {k++;}
 }
 
 var played = true;

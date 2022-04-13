@@ -39,9 +39,9 @@ scene.camera.projPerspective(left, right, bottom, top, near);
 // scene.addPosition( [new Position(new   Cube())] );
 // scene.addPosition( [new Position(Model.loadFromJSON("models/Cube.json"))])
 // scene.addPosition( [new Position(new Ring(1.0, 0.33, 1, 3))]);
-scene.addPosition( [new Position(new Pyramid(2.0, 1.0, 15, 4, false))]);
+//scene.addPosition( [new Position(new Pyramid(2.0, 1.0, 15, 4, false))]);
 scene.addPosition( [new Position(new Pyramid())]);
-scene.addPosition( [new Position(new ObjSimpleModel("assets/cessna.obj"))]);
+//scene.addPosition( [new Position(new ObjSimpleModel("assets/cessna.obj"))]);
 scene.addPosition( [new Position(new GRSModel("assets/grs/bronto.grs"))]);
 scene.addPosition( [new Position(new Cube2())] );
 scene.addPosition( [new Position(new Circle())] );

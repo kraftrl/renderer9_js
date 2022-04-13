@@ -5,6 +5,8 @@ import { Projection } from './Projection.js';
 import { View2Camera } from './View2Camera.js';
 import { Clip } from './Clip.js';
 import { Matrix } from './../scene/Matrix.js';
+import { Model } from './../scene/Model.js';
+import { Vertex } from './../scene/Vertex.js';
 
 /**
    This renderer takes as its input a {@link Scene} data structure
@@ -62,60 +64,133 @@ export class Pipeline {
         // Update the current model-to-view transformation matrix.
         ctm = ctm.timesMatrix( position.matrix );
 
-        // Render the Position's Model (if it exits and is visible).
-        if ( position.model != null && position.model.visible ) {
-            this.logMessage(position.model, "==== Render Model: " + position.model.name + " ====");
+        // Render the Position's Model if it exits.
+        if ( position.model != null )
+        {
+            // Do a pre-order, depth-first-traversal from this Model.
+            Pipeline.render_model(scene, position.model, ctm, vp);
+        }
+        else
+        {
+            if (Pipeline.debug) console.log("==== Missing model. ====");
+        }
 
-            this.check(position.model);
+        // Recursively render every nested Position of this Position.
+        for (var p of position.nestedPositions)
+        {
+            if ( p.visible )
+            {
+                // Do a pre-order, depth-first-traversal from this nested Position.
+                this.render_position(scene, p, ctm, vp);
+            }
+        }
+	}
 
-            this.logVertexList("0. Model    ", position.model);
+    /**
+      Recursively renderer a {@link Model}.
+      <p>
+      This method does a pre-order, depth-first-traversal of the tree of
+      {@link Model}'s rooted at the parameter {@code model}.
+      <p>
+      The pre-order "visit node" operation in this traversal first updates the
+      "current transformation matrix", ({@code ctm}), using the {@link Matrix}
+      in {@code model} and then recursively renders {@code model} using the
+      updated {@code ctm}.
+
+      @param scene   the {@link Scene} that we are rendering
+      @param model   the current {@link Model} object to recursively render
+      @param ctm     current model-to-view transformation {@link Matrix}
+      @param vp      {@link FrameBuffer.Viewport} to hold rendered image of the {@link Scene}
+   */
+    static render_model(scene, model, ctm, vp)
+    {
+        // Render the Model if is visible.
+        if ( model.visible )
+        {
+            this.logMessage(model, "==== Render Model: " + model.name + " ====");
+
+            this.check(model);
+
+            // Update the current model-to-view transformation matrix.
+            ctm = ctm.timesMatrix( model.nestedMatrix );
+
+            // 0. Make a deep copy of the Model.
+            var model2 = structuredClone(model); 
+            var newVertexList = [];
+            for (var v of model2.vertexList) {
+                newVertexList.push(new Vertex(v.x,v.y,v.z,v.w));
+            }
+            model2.vertexList = newVertexList;
+
+            this.logVertexList("0. Model    ", model2);
 
             // 1. Apply the current model-to-view coordinate transformation.
-            var model1 = Model2View.model2view(position.model, ctm);
+            Model2View.model2view(model2.vertexList, ctm);
 
-            this.logVertexList("1. View     ", model1);
+            this.logVertexList("1. View     ", model2);
 
             // 2. Apply the Camera's normalizing view-to-camera coordinate transformation.
-            var model2 = View2Camera.view2camera(model1, scene.camera.normalizeMatrix);
+            View2Camera.view2camera(model2.vertexList, scene.camera);
 
             this.logVertexList("2. Camera   ", model2);
 
             // 3. Apply the Camera's projection transformation.
-            var model3 = Projection.project(model2, scene.camera);
+            Projection.project(model2.vertexList, scene.camera);
 
-            this.logVertexList("3. Projected", model3);
+            this.logVertexList("3. Projected", model2);
 
-            // 4. Clip line segments to the camera's view rectangle.
-            var model4 = this.doClipping ? Clip.clip(model3) : model3;
+            // 4. Clip each line segment to the camera's view rectangle.
+            var lineSegmentList2 = [];
+            for (var ls of model2.lineSegmentList)
+            {
+                this.logLineSegment("4. Clipping", model2, ls);
 
-            this.logVertexList("4. Clipped  ", model4);
-            this.logColorList("4. Clipped  ", model4);
-            this.logLineSegmentList("4. Clipped  ", model4);
+                if ( Clip.clip(model2, ls) )
+                {
+                    // Keep the line segments that are visible.
+                    lineSegmentList2.push(ls);
+
+                    this.logLineSegment("4. Clipping (accept)", model2, ls);
+                }
+                else
+                {
+                    this.logLineSegment("4. Clipping (reject)", model2, ls);
+                }
+            }
+            // Replace the model's original list of line segments
+            // with the list of clipped line segments.
+            model2.lineSegmentList = lineSegmentList2;
+
+            this.logVertexList("4. Clipped  ", model2);
+            this.logLineSegmentList("4. Clipped  ", model2);
 
             // 5. Rasterize each visible line segment into pixels.
-            for (var ls of model4.lineSegmentList) {
-                this.logLineSegment("5. Rasterize", model4, ls);
+            for (var ls of model2.lineSegmentList)
+            {
+                this.logLineSegment("5. Rasterize", model2, ls);
 
-                Rasterize.rasterize(model4, ls, vp);
+                Rasterize.rasterize(model2, ls, vp);
             }
 
-            this.logMessage(position.model, "==== End Model: " + position.model.name + " ====");
-        }
-        else {
-            if ( position.model != null )
-                this.logMessage(position.model, "==== Hidden model: " + position.model.name + " ====");
-            else
-                if (Pipeline.debug) System.err.println("==== Missing model. ====");
-        }
-
-        // Recursively render every nested Position of this Position.
-        for (var p of position.nestedPositions) {
-            if ( p.visible ) {
-                // Do a pre-order, depth-first-traversal from this nested Position.
-                Pipeline.render_position(scene, p, ctm, vp);
+            // Recursively render every nested Model of this Model.
+            if (! (model2.nestedModels == null))
+            {
+                for (var m of model2.nestedModels)
+                {
+                    if ( m.visible )
+                    {
+                        // Do a pre-order, depth-first-traversal from this nested Model.
+                        this.render_model(scene, m, ctm, vp);
+                    }
+                }
             }
+            this.logMessage(model2, "==== End Model: " + model2.name + " ====");
         }
-	}
+        else
+        {
+            this.logMessage(model, "==== Hidden model: " + model.name + " ====");
+        }
+    }
 
 
     /**

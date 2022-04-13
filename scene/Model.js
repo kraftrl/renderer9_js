@@ -1,5 +1,6 @@
 import { Vertex } from './Vertex.js';
 import { LineSegment } from './LineSegment.js';
+import { Matrix } from './Matrix.js';
 
 /**
    A {@code Model} data structure represents a distinct geometric object
@@ -26,13 +27,15 @@ import { LineSegment } from './LineSegment.js';
               https://www.google.com/search?q=graphics+wireframe&tbm=isch</a>
 */
 export class Model {
-    constructor(name, vertexList = [], lineSegmentList = [], colorList = [], visible = true, debug = false) {
+    constructor(name, vertexList = [], lineSegmentList = [], colorList = [], visible = true, debug = false, nestedMatrix = Matrix.identity(), nestedModels = []) {
         this.name = name;
         this.vertexList = vertexList;
         this.lineSegmentList = lineSegmentList;
         this.colorList = colorList;
         this.visible = visible;
         this.debug = debug;
+        this.nestedMatrix = nestedMatrix;
+        this.nestedModels = nestedModels;
         // console.log(this.name);
     }
 
