@@ -251,7 +251,8 @@ export class Matrix {
 
     // Matrix times Matrix, returns a new matrix
     timesMatrix(m) {
-        return Matrix.build(this.timesVector(m.v1),
+        return Matrix.build(
+            this.timesVector(m.v1),
             this.timesVector(m.v2),
             this.timesVector(m.v3),
             this.timesVector(m.v4));

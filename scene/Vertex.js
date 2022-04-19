@@ -44,9 +44,10 @@ export class Vertex {
       this.w = v.w;
    }
 
-   setPoint(x,y,z){
+   setPoint(x,y,z,w){
       this.x = x;
       this.y = y;
       this.z = z;
+      this.w = w;
    }
 }

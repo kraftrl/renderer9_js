@@ -75,13 +75,13 @@ export class Projection {
             // v.x = v.x / -v.z;  // xp = xc / -zc
             // v.y = v.y / -v.z;  // yp = yc / -zc
             // v.z = -1;          // zp = -1
-            v.setPoint(v.x/-v.z, v.y/-v.z, -1);
+            v.setPoint(v.x/-v.z, v.y/-v.z, -1, v.w);
          } else {
             // Calculate the parallel projection.
             // xp = xc
             // yp = yc
             //v.z = 0; // zp = 0
-            v.setPoint(v.x, v.y, 0);
+            v.setPoint(v.x, v.y, 0, v.w);
          }
       }
    }

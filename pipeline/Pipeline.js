@@ -65,21 +65,17 @@ export class Pipeline {
         ctm = ctm.timesMatrix( position.matrix );
 
         // Render the Position's Model if it exits.
-        if ( position.model != null )
-        {
+        if ( position.model != null ) {
             // Do a pre-order, depth-first-traversal from this Model.
             Pipeline.render_model(scene, position.model, ctm, vp);
         }
-        else
-        {
+        else {
             if (Pipeline.debug) console.log("==== Missing model. ====");
         }
 
         // Recursively render every nested Position of this Position.
-        for (var p of position.nestedPositions)
-        {
-            if ( p.visible )
-            {
+        for (var p of position.nestedPositions) {
+            if ( p.visible ) {
                 // Do a pre-order, depth-first-traversal from this nested Position.
                 this.render_position(scene, p, ctm, vp);
             }
@@ -102,11 +98,9 @@ export class Pipeline {
       @param ctm     current model-to-view transformation {@link Matrix}
       @param vp      {@link FrameBuffer.Viewport} to hold rendered image of the {@link Scene}
    */
-    static render_model(scene, model, ctm, vp)
-    {
+    static render_model(scene, model, ctm, vp) {
         // Render the Model if is visible.
-        if ( model.visible )
-        {
+        if ( model.visible ) {
             this.logMessage(model, "==== Render Model: " + model.name + " ====");
 
             this.check(model);
@@ -115,12 +109,7 @@ export class Pipeline {
             ctm = ctm.timesMatrix( model.nestedMatrix );
 
             // 0. Make a deep copy of the Model.
-            var model2 = structuredClone(model); 
-            var newVertexList = [];
-            for (var v of model2.vertexList) {
-                newVertexList.push(new Vertex(v.x,v.y,v.z,v.w));
-            }
-            model2.vertexList = newVertexList;
+            var model2 = model.deepCopy();
 
             this.logVertexList("0. Model    ", model2);
 
@@ -141,19 +130,14 @@ export class Pipeline {
 
             // 4. Clip each line segment to the camera's view rectangle.
             var lineSegmentList2 = [];
-            for (var ls of model2.lineSegmentList)
-            {
+            for (var ls of model2.lineSegmentList) {
                 this.logLineSegment("4. Clipping", model2, ls);
 
-                if ( Clip.clip(model2, ls) )
-                {
+                if ( Clip.clip(model2, ls) ) {
                     // Keep the line segments that are visible.
                     lineSegmentList2.push(ls);
-
                     this.logLineSegment("4. Clipping (accept)", model2, ls);
-                }
-                else
-                {
+                } else {
                     this.logLineSegment("4. Clipping (reject)", model2, ls);
                 }
             }
@@ -165,20 +149,16 @@ export class Pipeline {
             this.logLineSegmentList("4. Clipped  ", model2);
 
             // 5. Rasterize each visible line segment into pixels.
-            for (var ls of model2.lineSegmentList)
-            {
+            for (var ls of model2.lineSegmentList) {
                 this.logLineSegment("5. Rasterize", model2, ls);
 
                 Rasterize.rasterize(model2, ls, vp);
             }
 
             // Recursively render every nested Model of this Model.
-            if (! (model2.nestedModels == null))
-            {
-                for (var m of model2.nestedModels)
-                {
-                    if ( m.visible )
-                    {
+            if (! (model2.nestedModels == null)) {
+                for (var m of model2.nestedModels) {
+                    if ( m.visible ) {
                         // Do a pre-order, depth-first-traversal from this nested Model.
                         this.render_model(scene, m, ctm, vp);
                     }
@@ -186,8 +166,7 @@ export class Pipeline {
             }
             this.logMessage(model2, "==== End Model: " + model2.name + " ====");
         }
-        else
-        {
+        else {
             this.logMessage(model, "==== Hidden model: " + model.name + " ====");
         }
     }

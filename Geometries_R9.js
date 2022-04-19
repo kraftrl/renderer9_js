@@ -104,6 +104,16 @@ topLevel.nestedModels.push(xyzAxes);
 var topLevel_p = new Position(topLevel);
 scene.addPosition([topLevel_p]);
 
+// Place the top level Position in front of the camera.
+topLevel_p.matrix = Matrix.translate(0, -3, -10);
+
+// Place each model where it belongs in the xz-plane
+for (var i = 0; i < models.length; i++) {
+    for (var j = 0; j < models[i].length; j++) {
+        models[i][j].nestedMatrix = Matrix.translate(4-4*i, 0, 6-3*j)
+    }
+}
+
 // // Set up the camera's view frustum.
 var right  = 2.0;
 var left   = -right;
@@ -119,7 +129,7 @@ var near   = 1.0;
 scene.camera.projPerspective(fov, aspect, near);
 */
 
-//displayNextFrame();
+displayNextFrame();
 
 function display(){
 	const resizer = document.getElementById("resizer");
@@ -140,8 +150,8 @@ function display(){
 
 function displayNextFrame() {
     timer = setInterval(function() {
-    rotateModels();
-    display();
+        rotateModels();
+        display();
     }, 1000/30);
 }
 
@@ -154,10 +164,8 @@ function rotateModels() {
 
     // Place each model in the xz-plane and
     // also rotate each model on its own axis.
-    for (var i = 0; i < models.length; i++)
-    {
-       for (var j = 0; j < models[i].length; j++)
-       {
+    for (var i = 0; i < models.length; i++) {
+       for (var j = 0; j < models[i].length; j++) {
           // Place the model where it belongs in the xz-plane
           // and rotate the model on its own axis.
           models[i][j].nestedMatrix = Matrix.translate(4-4*i, 0, 6-3*j)
@@ -166,7 +174,7 @@ function rotateModels() {
        }
     }
 
-    if(k === 360) {k = 0;} else {k++;}
+    if(k === 360) k = 0; else k++;
 }
 
 var played = true;
@@ -174,8 +182,7 @@ document.addEventListener('keypress', keyPressed);
 function keyPressed(event) {
     const c = event.key;
     //var played = true;
-    if ('f' == c)
-    {
+    if ('f' == c) {
         if (!played)
             rotateModels();
     }

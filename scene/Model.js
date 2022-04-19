@@ -39,6 +39,27 @@ export class Model {
         // console.log(this.name);
     }
 
+    deepCopy() {
+        var model = new Model();
+        model.name    = this.name;
+        model.visible = this.visible;
+        model.debug   = this.debug;
+        for (var v of this.vertexList) {
+            model.vertexList.push(new Vertex(v.x, v.y, v.z, v.w)); // deep copy of each Vertex
+        }
+        for (var ls of this.lineSegmentList) {
+            model.lineSegmentList.push(new LineSegment(ls.vIndex[0], ls.vIndex[1], ls.cIndex[0], ls.cIndex[1])); // deep copy of each LineSgement
+        }
+        for (var c of this.colorList) {
+            model.colorList.push(c); // Color objects are immutable
+        }
+        model.nestedMatrix = Matrix.build(this.nestedMatrix.v1, this.nestedMatrix.v2, this.nestedMatrix.v3, this.nestedMatrix.v4);
+        for (var m of this.nestedModels) {
+            model.nestedModels.push( m.deepCopy() ); // deep copy of each nested Model
+        }
+        return model;
+    }
+
     /**
         Add a {@link Vertex} (or vertices) to this {@code Model}'s
         {@link List} of vertices.

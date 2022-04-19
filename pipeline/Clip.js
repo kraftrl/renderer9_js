@@ -1,4 +1,3 @@
-import { Model } from './../scene/Model.js';
 import { Vertex } from './../scene/Vertex.js';
 import { LineSegment } from './../scene/LineSegment.js';
 
@@ -7,16 +6,15 @@ export class Clip {
     static clip(model) {
         var newLineSegmentList = [];
         
-        const model2 = new Model(model.name, model.vertexList.slice(), model.lineSegmentList, model.colorList.slice(), model.visible, model.debug);
-
-        for (const ls of model2.lineSegmentList) {
-            const ls_clipped = Clip.clipLS(model2, ls);
+        for (const ls of model.lineSegmentList) {
+            const ls_clipped = Clip.clipLS(model, ls);
             if (ls_clipped != null) {
                 newLineSegmentList.push(ls_clipped);
             }
         }
-
-        return new Model(model2.name, model2.vertexList, newLineSegmentList, model2.colorList, model2.visible, model2.debug);
+        model.lineSegmentList = newLineSegmentList;
+        
+        return model;
     }
 
 
