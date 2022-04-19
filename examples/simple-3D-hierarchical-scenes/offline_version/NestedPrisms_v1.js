@@ -11,29 +11,90 @@ import { FrameBuffer } from '../../../framebuffer/FrameBuffer.js';
 import { Color } from '../../../color/Color.js';
 import { PanelXZ } from '../../../models/PanelXZ.js';
 import { TriangularPrism} from '../../../models/TriangularPrism.js';
+import { Model } from '../../../scene/Model.js';
 
 /**
-   Here is a sketch of this program's scene graph.
-   Only the TriangularPrism model holds any geometry.
-   All of the other nodes hold only a matrix.
+ This is a nested (hierarchical) model made
+up of four prisms connected into a ring.
+<p>
+Here is a sketch of this model's scene graph.
 <pre>{@code
-                 Scene
-                   |
-                   |
-               Position
-              /    |    \
-             /     |     \
-       Matrix    Model    nested Positions
-         R      (empty)      / |  | \
-                            /  |  |  \
-                          p1  p2  p3  p4
-                            \  |  |  /
-                             \ |  | /
-                          TriangularPrism
+        Prisms Model
+        /    |     \
+        /     |      \
+    Matrix   geometry   nested Models
+    I      (empty)      / |  | \
+                        /  |  |  \
+                    m1  m2  m3  m4
+                        \  |  |  /
+                        \ |  | /
+                    TriangularPrism
+}</pre>
+*/
+class Prisms extends Model {
+  constructor() {
+      super();
+
+      const sqrt3 = Math.sqrt(3.0);
+
+      const m1 = new Model();
+      const m2 = new Model();
+      const m3 = new Model();
+      const m4 = new Model();
+
+      this.nestedModels.push(m1);
+      this.nestedModels.push(m2);
+      this.nestedModels.push(m3);
+      this.nestedModels.push(m4);
+
+      // Create a TriangularPrism object.
+      const m5 = new TriangularPrism(1.0/sqrt3, 2.0, Math.PI/4.0, 25, true);
+      ModelShading.setColor(m5, Color.Red);
+
+      // right
+      m1.nestedModels.push(m5);
+      m1.nestedMatrix = Matrix.translate(2+0.5/sqrt3, 0, 0);
+      // left
+      m2.nestedModels.push(m5);
+      m2.nestedMatrix = Matrix.translate(-2-0.5/sqrt3, 0, 0)
+                      .timesMatrix(Matrix.rotateZ(180));
+      // top
+      m3.nestedModels.push(m5);
+      m3.nestedMatrix = Matrix.rotateZ(90)
+                      .timesMatrix(Matrix.translate(2+0.5/sqrt3, 0, 0));
+      // bottom
+      m4.nestedModels.push(m5);
+      m4.nestedMatrix = Matrix.rotateZ(-90)
+                      .timesMatrix(Matrix.translate(2+0.5/sqrt3, 0, 0));
+  }
+}
+
+/**
+ Here is a sketch of this program's scene graph.
+ Only the Prisml node holds any geometry. All of
+ the other nodes hold only a matrix.
+<pre>{@code
+               Scene
+                 |
+                 |
+             Position
+            /    |    \
+           /     |     \
+     Matrix   Prisms    nested Positions
+      RT     /  |   \
+            /   |    \
+      Matrix  empty   nested Models
+        I               / |  | \
+                       /  |  |  \
+                     m1  m2  m3  m4
+                       \  |  |  /
+                        \ |  | /
+                    TriangularPrism
 }</pre>
 */
 
-const sqrt3 = Math.sqrt(3.0);
+// Timer for frames.
+var timer = null;
 
 // Create the Scene object that we shall render.
 const scene = new Scene();
@@ -44,42 +105,16 @@ const top_p = new Position();
 // Add the top level Position to the Scene.
 scene.addPosition([top_p]);
 
-// Create four nested Positions each holding
-// a reference to a shared prism Model.
-const prism = new TriangularPrism(1.0/sqrt3, 2.0, Math.PI/4.0, 25, true);
-ModelShading.setColor(prism, Color.Red);
-const p1 = new Position(prism);
-const p2 = new Position(prism);
-const p3 = new Position(prism);
-const p4 = new Position(prism);
-
-// Put these four nested Positions into the top level Position.
-top_p.addNestedPosition([p1]);
-top_p.addNestedPosition([p2]);
-top_p.addNestedPosition([p3]);
-top_p.addNestedPosition([p4]);
-
-// Place the four nested positions within
-// the top level position.
-// right
-p1.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
-// left
-p2.matrix.mult(Matrix.translate(-2-0.5/sqrt3, 0, 0));
-p2.matrix.mult(Matrix.rotateZ(180));
-// top
-p3.matrix.mult(Matrix.rotateZ(90));
-p3.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
-// bottom
-p4.matrix.mult(Matrix.rotateZ(-90));
-p4.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
+const prisms = new Prisms();
+ModelShading.setColor(prisms, Color.Red);
+top_p.model = prisms;
 
 // Create a floor Model.
 const floor = new PanelXZ(-4, 4, -4, 4);
 ModelShading.setColor(floor, Color.Black);
 const floor_p = new Position(floor);
-floor_p.matrix.mult(Matrix.translate(0, -4, 0));
 // Push this model away from where the camera is.
-floor_p.matrix.mult(Matrix.translate(0, 0, -5));
+floor_p.matrix = Matrix.translate(0, -4, -5);
 // Add the floor to the Scene.
 scene.addPosition([floor_p]);
 
@@ -101,15 +136,15 @@ scene.camera.projPerspective(left, right, bottom, top, near);
 
 // Spin the model 360 degrees arond two axes.
 for (var i = 0; i <= 180; i++) {
-    top_p.matrix2Identity();
-    // Push the model away from where the camera is.
-    top_p.matrix.mult(Matrix.translate(0, 0, -8));
-    top_p.matrix.mult(Matrix.rotateX(2*i));
-    top_p.matrix.mult(Matrix.rotateY(2*i));
-    top_p.matrix.mult(Matrix.rotateZ(2*i));
+  top_p.matrix2Identity();
+  // Push the model away from where the camera is.
+  top_p.matrix.mult( Matrix.translate(0, 0, -8) )
+              .mult( Matrix.rotateX(2*i) )
+              .mult( Matrix.rotateY(2*i) )
+              .mult( Matrix.rotateZ(2*i) );
 
-    // Render again.
-    fb.clearFB(Color.Gray);
-    Pipeline.render(scene, fb.vp);
-    fb.dumpFB2File(`PPM_NestedPrism_v1_Frame_${i}.ppm`);
+  // Render again.
+  fb.clearFB(Color.Gray);
+  Pipeline.render(scene, fb.vp);
+  fb.dumpFB2File(`PPM_NestedPrism_v1_Frame_${i}.ppm`);
 }

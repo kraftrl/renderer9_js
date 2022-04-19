@@ -14,10 +14,58 @@ import { Vertex } from '../../../scene/Vertex.js';
 import { LineSegment } from '../../../scene/LineSegment.js';
 import { Sphere } from '../../../models/Sphere.js';
 import { PanelXZ } from '../../../models/PanelXZ.js';
+ 
+/**
+  This is a simple, nested (hierarchical) model
+  made up of a triangle with a sphere attached
+  to each vertex.
+*/
+class SimpleModel extends Model {
+  constructor() {
+    super();
+    //var sphere = null;
+
+    // Add a single triangle to the geometry of this model.
+    var sin2PIover3 = Math.sin(2*Math.PI/3);
+    var v0 = new Vertex( 1,        0,       0);
+    var v1 = new Vertex(-0.5,  sin2PIover3, 0);
+    var v2 = new Vertex(-0.5, -sin2PIover3, 0);
+    this.addVertex([v0, v1, v2]);
+    this.addLineSegment([new LineSegment(0, 1),
+                        new LineSegment(1, 2),
+                        new LineSegment(2, 0)]);
+    ModelShading.setColor(this, Color.Black);
+
+    // Create three nested Models.
+    var m1 = new Model();
+    var m2 = new Model();
+    var m3 = new Model();
+
+    // Put the three nested Models into this Model.
+    this.nestedModels.push(m1);
+    this.nestedModels.push(m2);
+    this.nestedModels.push(m3);
+
+    // Give each of these nested Models a sphere as
+    // a (deeper) nested Model.
+    this.sphere = new Sphere(0.5, 10, 10);
+    ModelShading.setColor(this.sphere, Color.Red);
+
+    m1.nestedModels.push(this.sphere);
+    m2.nestedModels.push(this.sphere);
+    m3.nestedModels.push(this.sphere);
+
+    // Place the three sub-models at the
+    // corners of the main model's triangle.
+    m1.nestedMatrix = Matrix.translate( 1.5,   0,               0);
+    m2.nestedMatrix = Matrix.translate(-0.75,  1.5*sin2PIover3, 0);
+    m3.nestedMatrix = Matrix.translate(-0.75, -1.5*sin2PIover3, 0);
+  }
+}
 
 /**
-   This is a simple hierarchical scene made up of
-   a triangle with a sphere attached to each vertex.
+   This program uses the the hierarchical model
+   defined just above.
 <p>
    Here is a sketch of the scene graph for this example.
 <pre>{@code
@@ -26,32 +74,34 @@ import { PanelXZ } from '../../../models/PanelXZ.js';
                    |
                Position
               /    |    \
-             /     }     \
+             /     |     \
             /      |      \
-      Matrix     Model     nested Positions
-       RT     (triangle)  /     |        \
-                         /      |         \
-                        /       |          \
-                       /        |           \
-                      /         |            \
-              Position      Position       Position
-             /     \        /    \           /   \
-            /       \      /      \         /     \
-      Matrix    nested  Matrix  nested    Matrix   nested
-        T    Positions    T     Positions   T      Positions
-                      \            |             /
-                        \          |           /
-                          \        |         /
-                            \      |       /
-                              \    |     /
-                                Position
-                              /   |    \
-                             /    |     \
-                        Matrix   Model   nested Positions
-                          R    (sphere)      (empty)
+      Matrix  SimpleModel  nested Positions
+       RT     /     |   \
+             /      |    \
+        Matrix     tri    nested Models
+           I             /      |      \
+                        /       |       \
+                       /        |        \
+                      /         |         \
+                 Model        Model        Model
+                /   \         /   \        /   \
+               /     \       /     \      /     \
+         Matrix  nested  Matrix  nested  Matrix  nested
+           T     Models    T     Models    T     Models
+                       \           |            /
+                         \         |          /
+                           \       |        /
+                             \     |      /
+                               \   |    /
+                                 Model
+                                /  |  \
+                               /   |   \
+                         Matrix  sphere nested
+                           R            Models
 }</pre>
 */
-   
+
 // Create the Scene object that we shall render.
 const scene = new Scene();
 
@@ -61,62 +111,18 @@ const top_p = new Position();
 // Add the top level Position to the Scene.
 scene.addPosition([top_p]);
 
-// Create a Model for the top level position.
-const topModel = new Model();
-top_p.model = topModel;
+// Create an instance of our hierarchical Model.
+const mainModel = new SimpleModel();
 
-// Add a single triangle to the geometry of this model.
-const sin2PIover3 = Math.sin(2*Math.PI/3);
-const v0 = new Vertex( 1,        0,       0);
-const v1 = new Vertex(-0.5,  sin2PIover3, 0);
-const v2 = new Vertex(-0.5, -sin2PIover3, 0);
-topModel.addVertex([v0, v1, v2]);
-topModel.addLineSegment([new LineSegment(0, 1),
-                        new LineSegment(1, 2),
-                        new LineSegment(2, 0)]);
-ModelShading.setColor(topModel, Color.Black);
-
-// Create three nested Positions.
-const p1 = new Position();
-const p2 = new Position();
-const p3 = new Position();
-
-// Put these three nested Positions into the top level Position.
-top_p.addNestedPosition([p1]);
-top_p.addNestedPosition([p2]);
-top_p.addNestedPosition([p3]);
-
-// Place the three nested positions at the
-// corners of the top level position's triangle.
-p1.matrix.mult(Matrix.translate( 1.5,   0,               0));
-p2.matrix.mult(Matrix.translate(-0.75,  1.5*sin2PIover3, 0));
-p3.matrix.mult(Matrix.translate(-0.75, -1.5*sin2PIover3, 0));
-
-// Create a nested Position to be shared by
-// the last three Positions.
-const p4 = new Position();
-
-// Add this nested Position to the last three Positions.
-p1.addNestedPosition([p4]);
-p2.addNestedPosition([p4]);
-p3.addNestedPosition([p4]);
-
-// Give each of these three nested Positions a shared
-// sphere Model in another (deeper) nested Position.
-const sphere = new Sphere(0.5, 10, 10);
-ModelShading.setColor(sphere, Color.Red);
-const sphere_p = new Position(sphere);
-p1.addNestedPosition([sphere_p]);
-p2.addNestedPosition([sphere_p]);
-p3.addNestedPosition([sphere_p]);
+// Add the Moddel to the top level Position
+top_p.model = mainModel;
 
 // Create a floor Model.
 const floor = new PanelXZ(-4, 4, -4, 4);
 ModelShading.setColor(floor, Color.Black);
 const floor_p = new Position(floor);
-floor_p.matrix.mult(Matrix.translate(0, -4, 0));
 // Push this model away from where the camera is.
-floor_p.matrix.mult(Matrix.translate(0, 0, -5));
+floor_p.matrix = Matrix.translate(0, -4, -5);
 // Add the floor to the Scene.
 scene.addPosition([floor_p]);
 
@@ -135,20 +141,18 @@ var near   = 1.0;
 scene.camera.projPerspective(left, right, bottom, top, near);
 
 for (var i = 0; i <= 72; i++) {
-  // Rotate the spheres WITHIN the scene.
-  sphere_p.matrix.mult(Matrix.rotateY(5));
+  // Rotate the sphere WITHIN the model.
+  mainModel.sphere.nestedMatrix = mainModel.sphere.nestedMatrix.timesMatrix(Matrix.rotateY(5));
 
-  // Translate and rotate the WHOLE scene.
+  // Translate and rotate the WHOLE model.
   top_p.matrix2Identity();
-  // Push the whole scene away from where the camera is.
-  top_p.matrix.mult(Matrix.translate(0, 0, -5));
-  // Rotate and translate the whole scene.
-  top_p.matrix.mult(Matrix.rotateZ(5*i));
-  top_p.matrix.mult(Matrix.translate(2, 0, 0));
-
-
-  //    top_p.matrix.mult(Matrix.rotateY(5*i));
-  //    top_p.matrix.mult(Matrix.rotateX(5*i));
+  // Push the whole model away from where the camera is.
+  top_p.matrix.mult( Matrix.translate(0, 0, -5) );
+  // Rotate and translate the whole model.
+  top_p.matrix.mult( Matrix.rotateZ(5*i) );
+  top_p.matrix.mult( Matrix.translate(2, 0, 0) );
+//         top_p.matrix.mult( Matrix.rotateY(5*i) );
+//         top_p.matrix.mult( Matrix.rotateX(5*i) );
 
   // Render
   fb.clearFB(Color.Gray);

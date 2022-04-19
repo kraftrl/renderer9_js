@@ -11,11 +11,110 @@ import { FrameBuffer } from '../../../framebuffer/FrameBuffer.js';
 import { Color } from '../../../color/Color.js';
 import { PanelXZ } from '../../../models/PanelXZ.js';
 import { TriangularPrism} from '../../../models/TriangularPrism.js';
+import { Model } from '../../../scene/Model.js';
+
+/**
+   This is a nested (hierarchical) model made
+   up of four prisms connected into a ring.
+<p>
+   Here is a sketch of this model's scene graph.
+<pre>{@code
+            Prisms Model
+            /    |     \
+           /     |      \
+     Matrix   geometry   nested Models
+       I      (empty)      / |  | \
+                          /  |  |  \
+                        m1  m2  m3  m4
+                          \  |  |  /
+                           \ |  | /
+                        TriangularPrism
+}</pre>
+*/
+class Prisms_v3 extends Model {
+  constructor() {
+    super();
+
+    const sqrt3 = Math.sqrt(3.0);
+
+    const m1 = new Model();
+    const m2 = new Model();
+    const m3 = new Model();
+    const m4 = new Model();
+
+    this.nestedModels.push(m1);
+    this.nestedModels.push(m2);
+    this.nestedModels.push(m3);
+    this.nestedModels.push(m4);
+
+    // Create a TriangularPrism object.
+    const m5 = new TriangularPrism(1.0/sqrt3, 2.0, Math.PI/4.0, 25, true);
+    ModelShading.setColor(m5, Color.Magenta);
+
+    // right
+    m1.nestedModels.push(m5);
+    m1.nestedMatrix = Matrix.translate(2+0.5/sqrt3, 0, 0);
+    // left
+    m2.nestedModels.push(m5);
+    m2.nestedMatrix = Matrix.translate(-2-0.5/sqrt3, 0, 0)
+                      .timesMatrix(Matrix.rotateZ(180));
+    // top
+    m3.nestedModels.push(m5);
+    m3.nestedMatrix = Matrix.rotateZ(90)
+                      .timesMatrix(Matrix.translate(2+0.5/sqrt3, 0, 0));
+    // bottom
+    m4.nestedModels.push(m5);
+    m4.nestedMatrix = Matrix.rotateZ(-90)
+                      .timesMatrix(Matrix.translate(2+0.5/sqrt3, 0, 0));
+
+    this.leftSide = m2;
+  }
+}
+
+/**
+   This is a nested (hierarchical) model made
+   up of two linked four-prism rings.
+<p>
+   Here is a sketch of this model's scene graph.
+<pre>{@code
+            Links Model
+            /    |     \
+           /     |      \
+     Matrix   geometry   nested Models
+       I      (empty)        /  \
+                            /    \
+                          m1      m2
+                            \    /
+                             \  /
+                            Prisms
+}</pre>
+*/
+class Links_v3 extends Model {
+  constructor() {
+    super();
+
+    const m1 = new Model();
+    const m2 = new Model();
+
+    this.nestedModels.push(m1);
+    this.nestedModels.push(m2);
+
+    const m3 = new Prisms_v3();
+
+    // link 1
+    m1.nestedModels.push(m3);
+    // link 2
+    m2.nestedModels.push(m3);
+    m2.nestedMatrix = Matrix.rotateZ(180)
+                      .timesMatrix(Matrix.translate(-2, 0, 0))
+                      .timesMatrix(Matrix.rotateX(90));
+
+    this.opposites = m3.leftSide;
+  }
+}
 
 /**
    Here is a sketch of this program's scene graph.
-   Only the TriangularPrism model holds any geometry.
-   All of the other nodes hold only a matrix.
 <pre>{@code
                  Scene
                    |
@@ -23,26 +122,31 @@ import { TriangularPrism} from '../../../models/TriangularPrism.js';
                Position
               /    |    \
              /     |     \
-       Matrix    Model    nested Positions
-         R      (empty)       /    \
-                             /      \
-                       Position    Position
-                       /     \     /     \
-                      /       \   /       \
-                Matrix       Position      Matrix
-                  I         /    |    \     RTR
-                           /     |     \
-                     Matrix    Model    nested Positions
-                       I      (empty)     / |  | \
-                                         /  |  |  \
-                                       p1  p2  p3  p4
-                                         \  |  |  /
-                                          \ |  | /
-                                       TriangularPrism
+       Matrix    Links    nested Positions
+        RT     /  |   \
+              /   |    \
+             /    |     \
+      Matrix   geometry  nested Models
+        I      (empty)       /  \
+                            /    \
+                          m1      m2
+                            \    /
+                             \  /
+                         Prisms Model
+                         /    |     \
+                        /     |      \
+                  Matrix   geometry   nested Models
+                    I       (empty)      / |  | \
+                                        /  |  |  \
+                                      m1  m2  m3  m4
+                                        \  |  |  /
+                                         \ |  | /
+                                      TriangularPrism
 }</pre>
 */
 
-const sqrt3 = Math.sqrt(3.0);
+// Timer for frames.
+var timer = null;
 
 // Create the Scene object that we shall render.
 const scene = new Scene();
@@ -53,57 +157,16 @@ const top_p = new Position();
 // Add the top level Position to the Scene.
 scene.addPosition([top_p]);
 
-// Create two "linked" copies of the graph defined below.
-const link1_p = new Position();
-const link2_p = new Position();
-link2_p.matrix.mult(Matrix.rotateZ(180));
-link2_p.matrix.mult(Matrix.translate(-2, 0, 0));
-link2_p.matrix.mult(Matrix.rotateX(90));
-top_p.addNestedPosition([link1_p, link2_p]);
-
-// Create a Position that holds one copy of the four combined prisms.
-const fourPrisms_p = new Position();
-
-// Add it to each of the linked positions.
-link1_p.addNestedPosition([fourPrisms_p]);
-link2_p.addNestedPosition([fourPrisms_p]);
-
-// Create four nested Positions each holding
-// a reference to a shared prism Model.
-const prism = new TriangularPrism(1.0/sqrt3, 2.0, Math.PI/4.0, 25, true);
-ModelShading.setColor(prism, Color.Magenta);
-const p1 = new Position(prism);
-const p2 = new Position(prism);
-const p3 = new Position(prism);
-const p4 = new Position(prism);
-
-// Put these four nested Positions into the four-prism Position.
-fourPrisms_p.addNestedPosition([p1]);
-fourPrisms_p.addNestedPosition([p2]);
-fourPrisms_p.addNestedPosition([p3]);
-fourPrisms_p.addNestedPosition([p4]);
-
-// Place the four nested positions within
-// the four-prism position.
-// right
-p1.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
-// left
-p2.matrix.mult(Matrix.translate(-2-0.5/sqrt3, 0, 0));
-p2.matrix.mult(Matrix.rotateZ(180));
-// top
-p3.matrix.mult(Matrix.rotateZ(90));
-p3.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
-// bottom
-p4.matrix.mult(Matrix.rotateZ(-90));
-p4.matrix.mult(Matrix.translate(2+0.5/sqrt3, 0, 0));
+const links = new Links_v3();
+ModelShading.setColor(links, Color.Magenta);
+top_p.model = links;
 
 // Create a floor Model.
 const floor = new PanelXZ(-4, 4, -4, 4);
 ModelShading.setColor(floor, Color.Black);
 const floor_p = new Position(floor);
-floor_p.matrix.mult(Matrix.translate(0, -4, 0));
 // Push this model away from where the camera is.
-floor_p.matrix.mult(Matrix.translate(0, 0, -5));
+floor_p.matrix = Matrix.translate(0, -4, -5);
 // Add the floor to the Scene.
 scene.addPosition([floor_p]);
 
@@ -127,13 +190,13 @@ scene.camera.projPerspective(left, right, bottom, top, near);
 for (var i = 0; i <= 180; i++) {
   top_p.matrix2Identity();
   // Push the model away from where the camera is.
-  top_p.matrix.mult(Matrix.translate(0, 0, -8));
-  top_p.matrix.mult(Matrix.rotateX(2*i));
-  top_p.matrix.mult(Matrix.rotateY(2*i));
-  top_p.matrix.mult(Matrix.rotateZ(2*i));
+  top_p.matrix.mult( Matrix.translate(0, 0, -8) )
+              .mult( Matrix.rotateX(2*i) )
+              .mult( Matrix.rotateY(2*i) )
+              .mult( Matrix.rotateZ(2*i) );
 
   // Rotate opposite sides of each link.
-  p2.matrix.mult(Matrix.rotateX(1));  // left side
+  links.opposites.nestedMatrix = links.opposites.nestedMatrix.timesMatrix(Matrix.rotateX(1));
 
   // Render again.
   fb.clearFB(Color.Gray);
