@@ -183,15 +183,18 @@ export class Pipeline {
     */
     static check(model) {
         var error = false;
-        if (model.vertexList.length === 0) {
+        
+        if (model.name === undefined) return
+
+        if ((model.vertexList.length === 0) && ! (model.lineSegmentList === 0) ) {
             console.error("***WARNING: This model does not have any vertices.");
             error = true;
         }
-        if (model.lineSegmentList.length === 0) {
+        if ((model.lineSegmentList.length === 0) && (model.lineSegmentList.length === 0) ) {
             console.error("***WARNING: This model does not have any line segments.");
             error = true;
         }
-        if (model.colorList.length === 0) {
+        if ((model.colorList.length === 0) && (model.colorList.length === 0) ) {
             console.error("***WARNING: This model does not have any colors.");
             error = true;
         }

@@ -5,8 +5,9 @@ import { Position } from '../../scene/Position.js';
 import { Pipeline } from '../../pipeline/Pipeline.js';
 import { FrameBuffer } from '../../framebuffer/FrameBuffer.js';
 import { Color } from '../../color/Color.js';
-import {Sphere} from '../../models/Sphere.js';
+import { Sphere } from '../../models/Sphere.js';
 import { Rasterize } from "../../pipeline/Rasterize.js";
+import { Clip } from '../../pipeline/Clip.js';
 
 /**
    Draw an animation of a solar system with a sun, planet, and moon.
@@ -25,21 +26,26 @@ import { Rasterize } from "../../pipeline/Rasterize.js";
          /   |     \
         /    |      \
   Matrix   Model    nested Positions
-    R      (sun)          |
+    T     /  |  \                  \
+         /   |   \                  \
+   Matrix   sun   \                  empty
+     R             \
+                    nested Models
                           |
-                       Position
-                      /   |   \
-                     /    |    \
-               Matrix   Model   nested Positions
-                 TR    (planet)      |
-                                     |
-                                  Position
-                                 /   |    \
-                                /    |     \
-                            Matrix  Model   nested Positions
-                              TR   (moon)       |
-                                                |
-                                              empty
+                          |
+                        Model
+                       /  |   \
+                      /   |    \
+               Matrix   planet  nested Models
+                 TR                 |
+                                    |
+                                  Model
+                                /   |   \
+                               /    |    \
+                          Matrix   moon   nested Models
+                            TR                 \
+                                                \
+                                                empty
 }</pre>
 */
 
@@ -56,9 +62,9 @@ var moonAxisRot = 0.0;
 
 var ecliptic = 7.0; // angle of the ecliptic plane
 
-var sun_p = null;
-var planetMoon_p = null;
-var moon_p = null;
+var sun = null;
+var planet = null;
+var moon = null;
 
 /*
     See the above picture of the tree that this code creates.
@@ -74,20 +80,33 @@ const bottom = -top;
 const near = 2;
 scene.camera.projOrtho(left, right, bottom, top);
 
-// Create the sun.
-scene.addPosition([new Position(new Sphere(1.0, 10, 10))]);
-ModelShading.setColor(scene.getPosition(0).model, Color.Yellow);
-sun_p = scene.getPosition(0);
+// Create a Position object that will hold the solar system.
+const solarSystem_p = new Position();
 
-// Create the planet.
-sun_p.addNestedPosition([new Position(new Sphere(0.5, 10, 10))]);
-ModelShading.setColor(sun_p.getNestedPosition(0).model, Color.Blue);
-planetMoon_p = sun_p.getNestedPosition(0);
+// Add the Position object to the scene.
+scene.addPosition([solarSystem_p]);
 
-// Create the planet's moon.
-planetMoon_p.addNestedPosition([new Position(new Sphere(0.2, 10, 10))]);
-ModelShading.setColor(planetMoon_p.getNestedPosition(0).model, Color.Green);
-moon_p = planetMoon_p.getNestedPosition(0);
+// Push the position away from where the camera is.
+solarSystem_p.matrix = Matrix.translate(0, 0, -8);
+
+// Create the sun (top level) Model.
+sun = new Sphere(1.0, 10, 10);
+ModelShading.setColor(sun, Color.Yellow);
+// Add the sun Model to the Scene's Position.
+solarSystem_p.model = sun;
+
+// Create the planet-moon Model.
+planet = new Sphere(0.5, 10, 10);
+ModelShading.setColor(planet, Color.Blue);
+
+// Create the moon Model.
+moon = new Sphere(0.2, 10, 10);
+ModelShading.setColor(moon, Color.Green);
+// Add the moon sub-model to the planet Model.
+planet.nestedModels.push(moon);
+
+// Add the planet-moon sub-models to the sun Model.
+sun.nestedModels.push(planet);
 
 print_help_message();
 
@@ -143,6 +162,11 @@ function keyPressed(event) {
 		Rasterize.doGamma = ! Rasterize.doGamma;
 		console.log("Gamma correction is turned " + (Rasterize.doGamma ? "On" : "Off"));
 	}
+	else if('d' == c) {
+		Pipeline.debug = ! Pipeline.debug;
+		Clip.debug = ! Clip.debug;
+		console.log("Debugging is turned " + (Pipeline.debug? "On" : "Off"));
+	}
 
 	// Set up the camera's view volume.
 	if (scene.camera.perspective)
@@ -180,25 +204,20 @@ function display(){
 }
 
 function rotateModels() {
-	// Push the solar system away from where the camera is.
-	sun_p.matrix2Identity();
-	//sun_p.matrix.mult(Matrix.translate(0, 0, -8));
+	
 	// Rotate the plane of the ecliptic
-	// (rotate the sun's xz-plane about the x-axis).
-	sun_p.matrix.mult(Matrix.rotateX(ecliptic));
-
-	// Rotate the sun on it axis.
-	sun_p.matrix.mult(Matrix.rotateY(planetOrbitRot));
+	// (rotate the sun's xz-plane about the x-axis)
+	// and rotate the sun on it axis.
+	sun.nestedMatrix = Matrix.rotateX(ecliptic)
+					.timesMatrix(Matrix.rotateY(planetOrbitRot));
 
 	// Place the planet-moon away from the sun and rotate the planet-moon on its axis.
-	planetMoon_p.matrix2Identity();
-	planetMoon_p.matrix.mult(Matrix.translate(planetOrbitRadius, 0, 0));
-	planetMoon_p.matrix.mult(Matrix.rotateY(moonOrbitRot));
+	planet.nestedMatrix = Matrix.translate(planetOrbitRadius, 0, 0)
+						.timesMatrix(Matrix.rotateY(moonOrbitRot));
 
 	// Place the moon away from the planet and rotate the moon on its axis.
-	moon_p.matrix2Identity();
-	moon_p.matrix.mult(Matrix.translate(moonOrbitRadius, 0, 0));
-	moon_p.matrix.mult(Matrix.rotateY(moonAxisRot));
+	moon.nestedMatrix = Matrix.translate(moonOrbitRadius, 0, 0)
+						.timesMatrix(Matrix.rotateY(moonAxisRot));
 
 	// Update the parameters for the next frame.
 	planetOrbitRot += 1.0;
