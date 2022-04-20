@@ -17,7 +17,7 @@ const top_p = new Position();
 scene.addPosition([top_p]);
 
 // Push the position away from where the camera is.
-top_p.matrix.mult( Matrix.translate(0, -0.2, -1) );
+top_p.matrix.mult( Matrix.translate(0, 0, -1) );
 top_p.matrix.mult( Matrix.rotateZ(90) );
 
 // Create the Model object.
@@ -29,20 +29,29 @@ ModelShading.setColor(sierpinskiTriangle.nestedModels[2], Color.Magenta);
 // Add the model to the position.
 top_p.model = sierpinskiTriangle;
 
+// Set up the camera's view frustum.
+var right  = 1.0;
+var left   = -right;
+var top    = 1.0;
+var bottom = -top;
+var near   = 1.0;
+scene.camera.projPerspective(left, right, bottom, top, near);
+
 // Create a framebuffer to render our scene into.
 const vp_width  = 1024;
 const vp_height = 1024;
-const fb = new FrameBuffer(vp_width, vp_height);
+const fb = new FrameBuffer(undefined, vp_width, vp_height);
 
 var startTime, stopTime;
 startTime = new Date().getTime();
 
 for (var k = 0; k < 720; k++) {
-    fb.clearFB(Color.black);
-    Pipeline.render(scene, fb.vp);
-    fb.dumpFB2File(`PPM_SierpinskiMovie_v1_Frame${k.toPrecision(3)}.ppm`);
-
+    console.log(k);
     updateNestedMatrices(sierpinskiTriangle, true);
+
+    fb.clearFB(Color.Black);
+    Pipeline.render(scene, fb.vp);
+    fb.dumpFB2File(`PPM_SierpinskiMovie_v1_Frame${k.toString().padStart(3,'0')}.ppm`);
 }
 
 function updateNestedMatrices(model, both) {

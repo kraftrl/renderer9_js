@@ -201,5 +201,5 @@ for (var i = 0; i <= 180; i++) {
   // Render again.
   fb.clearFB(Color.Gray);
   Pipeline.render(scene, fb.vp);
-  fb.dumpFB2File(`PPM_NestedPrism_v3_Frame_${i}.ppm`);
+  fb.dumpFB2File(`PPM_NestedPrism_v3_Frame_${i.toString().padStart(3,'0')}.ppm`);
 }

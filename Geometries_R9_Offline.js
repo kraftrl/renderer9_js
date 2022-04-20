@@ -155,7 +155,7 @@ for (var k = 0; k < 360; k++) {
 
     fb.clearFB(Color.Black);
     Pipeline.render(scene, fb.vp);
-    fb.dumpFB2File(`PPM_Geometries_R9_Frame${k}.ppm`);
+    fb.dumpFB2File(`PPM_Geometries_R9_Frame${k.toString().padStart(3,'0')}.ppm`);
 }
 
 stopTime = new Date().getTime();

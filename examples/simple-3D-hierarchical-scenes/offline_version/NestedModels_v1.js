@@ -157,5 +157,5 @@ for (var i = 0; i <= 72; i++) {
   // Render
   fb.clearFB(Color.Gray);
   Pipeline.render(scene, fb.vp);
-  fb.dumpFB2File(`PPM_NestedModels_v1_Frame${i}.ppm`);
+  fb.dumpFB2File(`PPM_NestedModels_v1_Frame${i.toString().padStart(2,'0')}.ppm`);
 }
