@@ -40,26 +40,60 @@ var bottom = -top;
 var near   = 1.0;
 scene.camera.projPerspective(left, right, bottom, top, near);
 
+var counter = 0;
+const angle = 1;
+
 displayNextFrame();
 
 function displayNextFrame() {
     timer = setInterval(function() {
         display();
-        
-        updateNestedMatrices(sierpinskiTriangle, true);
+        counter++;
+        updateNestedMatrices(sierpinskiTriangle, angle);
     }, 1000/30);
 }
 
-function updateNestedMatrices(model, both) {
-    if (model.nestedModels.length) {
-        if (both) {
-            model.nestedModels[1].nestedMatrix.mult(Matrix.rotateZ( 0.5));
-            model.nestedModels[2].nestedMatrix.mult(Matrix.rotateZ(-0.5));
-        } else {
-            model.nestedModels[0].nestedMatrix.mult(Matrix.rotateZ( 0.5));
-        }
-        for (var m of model.nestedModels) { updateNestedMatrices(m, both); }
+function updateNestedMatrices(model, angle){
+    if (counter < 120) updateNestedMatrices1(model, angle);
+    else if (counter < 360) updateNestedMatrices2(model, angle);
+    else if (counter < 600) updateNestedMatrices3(model, angle);
+    else if (counter < 960) updateNestedMatrices4(model, angle);
+    else {
+        counter = 0;
+        updateNestedMatrices1(model, angle);
     }
+}
+
+function updateNestedMatrices1(model, angle) {
+    if (model.nestedModels.length) {
+        model.nestedModels[0].nestedMatrix.mult(Matrix.rotateZ(angle));
+        model.nestedModels[1].nestedMatrix.mult(Matrix.rotateZ(angle));
+        model.nestedModels[2].nestedMatrix.mult(Matrix.rotateZ(angle));
+    }
+    for (var m of model.nestedModels) { updateNestedMatrices1(m, angle); }
+}
+
+function updateNestedMatrices2(model, angle) {
+    if (model.nestedModels.length) {
+        model.nestedModels[0].nestedMatrix.mult(Matrix.rotateZ(angle));
+    }
+    for (var m of model.nestedModels) { updateNestedMatrices2(m, angle); }
+}
+
+function updateNestedMatrices3(model, angle) {
+    if (model.nestedModels.length) {
+        model.nestedModels[1].nestedMatrix.mult(Matrix.rotateZ( angle));
+        model.nestedModels[2].nestedMatrix.mult(Matrix.rotateZ(-angle));
+    }
+    for (var m of model.nestedModels) { updateNestedMatrices3(m, angle); }
+}
+
+function updateNestedMatrices4(model, angle) {
+    if (model.nestedModels.length) {
+        model.nestedModels[1].nestedMatrix.mult(Matrix.rotateZ(-angle));
+        model.nestedModels[2].nestedMatrix.mult(Matrix.rotateZ(-angle));
+    }
+    for (var m of model.nestedModels) { updateNestedMatrices4(m, angle); }
 }
 
 function display(){
@@ -86,7 +120,7 @@ function keyPressed(event) {
     //var played = true;
     if ('f' == c) {
         if (!played) {
-            updateNestedMatrices(sierpinskiTriangle, true);
+            updateNestedMatrices(sierpinskiTriangle, angle);
             display();
         }
     }

@@ -38,8 +38,8 @@ var near   = 1.0;
 scene.camera.projPerspective(left, right, bottom, top, near);
 
 // Create a framebuffer to render our scene into.
-const vp_width  = 1024;
-const vp_height = 1024;
+const vp_width  = 800;
+const vp_height = 800;
 const fb = new FrameBuffer(undefined, vp_width, vp_height);
 
 var startTime, stopTime;
@@ -47,11 +47,11 @@ startTime = new Date().getTime();
 
 for (var k = 0; k < 720; k++) {
     console.log(k);
-    updateNestedMatrices(sierpinskiTriangle, true);
-
     fb.clearFB(Color.Black);
     Pipeline.render(scene, fb.vp);
     fb.dumpFB2File(`PPM_SierpinskiMovie_v1_Frame${k.toString().padStart(3,'0')}.ppm`);
+
+    updateNestedMatrices(sierpinskiTriangle, true);
 }
 
 function updateNestedMatrices(model, both) {
