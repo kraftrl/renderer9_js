@@ -1,0 +1,2 @@
+node SierpinskiMovieOffline.js
+pause

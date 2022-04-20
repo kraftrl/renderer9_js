@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset=utf-8>
+		<title>Sierpinski Movie</title>
+		<link rel="shortcut icon" href="#" />
+		<style>
+			body {
+				margin: 0;
+				overflow: auto;
+			}
+			#resizer {
+				float: left;
+				overflow: hidden;
+				resize: both;
+				width: 1200px;
+				height: 600px;
+			}
+			help {
+				padding: 5px;
+				margin: 20px;
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				background-color: lightgray;
+				border: 2px solid black;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="resizer">
+			<canvas id="pixels" width=1200 height=600></canvas>
+		</div>
+		<div style="margin: 2px; position: absolute; top: 0; right: 0;">
+			<button style="font-size: medium; cursor: pointer;" onclick="location = location.origin;">Home</button>
+		</div>
+
+		<help>
+			Use the 'p' to pause the animation.<br>
+			Use the 'f' key to display the next frame.<br>
+			*Run SierpinskiMovie.cmd to create the .ppm files for each frame (must have Nodejs installed).<br>
+		</help>
+
+		<script src="SierpinskiMovie.js" type="module"></script>
+	</body>
+</html>

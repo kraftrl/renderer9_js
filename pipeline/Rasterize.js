@@ -1,5 +1,3 @@
-import { Model } from './../scene/Model.js';
-import { Vertex } from './../scene/Vertex.js';
 import { Color } from '../color/Color.js';
 
 export class Rasterize {

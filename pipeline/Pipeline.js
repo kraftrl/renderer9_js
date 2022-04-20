@@ -103,7 +103,7 @@ export class Pipeline {
         if ( model.visible ) {
             this.logMessage(model, "==== Render Model: " + model.name + " ====");
 
-            this.check(model);
+            // this.check(model);
 
             // Update the current model-to-view transformation matrix.
             ctm = ctm.timesMatrix( model.nestedMatrix );
