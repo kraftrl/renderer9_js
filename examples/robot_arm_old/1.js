@@ -31,29 +31,27 @@ import { Vertex } from "../../scene/Vertex.js";
             Position
             /  |    \
            /   |     \
-     Matrix    |     List<Position>
-       RS      |           |
-               |           |
-              /        Position
-             /         /   |   \
-            /         /    |    \
-           /     Matrix   /      List<Position>
-          |       TRS    /             |
-          |             /              |
-          |            /            Position
-          |           /             /  |   \
-          |          /             /   |    \
-          |         /        Matrix    |     List<Position>
-          |        /          TRS      |           |
-          |       /                   /            |
-           \     /                   /          Position
-            Model ------------------/           /  |   \
-          armSegment                           /   |    \
-                    \                    Matrix    |     List<Position>
-                     \                    TRS     /             |
-                      \                          /            empty
-                       \------------------------/
-
+     Matrix  Model   List<Position>
+       R    shoulder       |
+                           |
+                       Position
+                       /   |   \
+                      /    |    \
+                 Matrix  Model   List<Position>
+                  TR     elbow         |
+                                       |
+                                    Position
+                                    /  |   \
+                                   /   |    \
+                             Matrix  Model   List<Position>
+                              TR     wrist         |
+                                                   |
+                                                Position
+                                                /  |   \
+                                               /   |    \
+                                         Matrix  Model   List<Position>
+                                          TR     finger         |
+                                                              empty
 </pre>
 */
 
@@ -72,58 +70,57 @@ var wristLength = 0.2;
 var fingerLength = 0.1;
 
 var scene;
-var shoulder_p;
-var elbow_p;
-var wrist_p;
-var finger_p;
+var shoulder;
+var elbow;
+var wrist;
+var finger;
 
 var scene = new Scene();
 scene.camera.projOrthoReset();
 
-var shoulder_p = new Position();
-scene.addPosition([shoulder_p]);
-shoulder_p.matrix = Matrix.translate(0, 0, -1);
+// Create a Position object that will hold the robot arm.
+const arm_p = new Position();
+
+// Add the Position object to the scene.
+scene.addPosition([arm_p]);
+
+// Push the position away from where the camera is.
+arm_p.matrix = Matrix.translate(0, 0, -1);
 
 /*
-    Create the scene graph.
+	Be sure to draw a picture of the (simple) tree that this code creates.
 */
-// Create one Model that can be used
-// for each part of the robot arm.
-const v0 = new Vertex(0, 0, 0);
-const v1 = new Vertex(1, 0, 0);
-const armSegment = new Model("arm segment");
-armSegment.addVertex([v0, v1]);
-armSegment.addLineSegment([new LineSegment(0, 1)]);
-ModelShading.setColor(armSegment, Color.Blue);
+shoulder = new Model();
+shoulder.addVertex([new Vertex(0, 0, 0)]);
+shoulder.addVertex([new Vertex(shoulderLength, 0, 0)]);
+shoulder.addLineSegment([new LineSegment(0, 1)]);
+// Add the shoulder Model to the Scene's Position.
+arm_p.model = shoulder;
 
-// Add the armSegment Model to the Scene's Position.
-shoulder_p.model = armSegment;
+elbow = new Model();
+elbow.addVertex([new Vertex(0, 0, 0)]);
+elbow.addVertex([new Vertex(elbowLength, 0, 0)]);
+elbow.addLineSegment([new LineSegment(0, 1)]);
+shoulder.nestedModels.push( elbow );
 
-elbow_p = new Position(armSegment);
-shoulder_p.addNestedPosition([elbow_p]);
+wrist = new Model();
+wrist.addVertex([new Vertex(0, 0, 0)]);
+wrist.addVertex([new Vertex(wristLength, 0, 0)]);
+wrist.addLineSegment([new LineSegment(0, 1)]);
+elbow.nestedModels.push( wrist );
 
-wrist_p = new Position(armSegment);
-elbow_p.addNestedPosition([wrist_p]);
-
-finger_p = new Position(armSegment);
-wrist_p.addNestedPosition([finger_p]);
+finger = new Model();
+finger.addVertex([new Vertex(0, 0, 0)]);
+finger.addVertex([new Vertex(fingerLength, 0, 0)]);
+finger.addLineSegment([new LineSegment(0, 1)]);
+wrist.nestedModels.push( finger );
 
 // Initialize the nested matrices for the sub models.
-shoulder_p.matrix.mult(Matrix.scale(shoulderLength,
-									shoulderLength,
-									1));
-elbow_p.matrix.mult(Matrix.translate(1, 0, 0));
-elbow_p.matrix.mult(Matrix.scale(elbowLength/shoulderLength,
-									elbowLength/shoulderLength,
-									1));
-wrist_p.matrix.mult(Matrix.translate(1, 0, 0));
-wrist_p.matrix.mult(Matrix.scale(wristLength/elbowLength,
-									wristLength/elbowLength,
-									1));
-finger_p.matrix.mult(Matrix.translate(1, 0, 0));
-finger_p.matrix.mult(Matrix.scale(fingerLength/wristLength,
-									fingerLength/wristLength,
-									1));
+elbow.nestedMatrix  = Matrix.translate(shoulderLength, 0, 0);
+wrist.nestedMatrix  = Matrix.translate(elbowLength,    0, 0);
+finger.nestedMatrix = Matrix.translate(wristLength,    0, 0);
+
+ModelShading.setColor(shoulder, Color.Blue);
 
 print_help_message();
 display(true);
@@ -170,25 +167,18 @@ function keyPressed(e){
 	}
 	else if ('c' == c) {
 		// Change the solid random color of the robot arm.
-		const color = ModelShading.randomColor();
-		ModelShading.setColor(shoulder_p.model, color);
-		ModelShading.setColor(elbow_p.model, color);
-		ModelShading.setColor(wrist_p.model, color);
-		ModelShading.setColor(finger_p.model, color);
+		ModelShading.setRandomColor(shoulder);
 	}
 	else if ('C' == c) {
 		// Change the solid random color of each segment of the robot arm.
-		ModelShading.setRandomColor(shoulder_p.model);
-		ModelShading.setRandomColor(elbow_p.model);
-		ModelShading.setRandomColor(wrist_p.model);
-		ModelShading.setRandomColor(finger_p.model);
+		ModelShading.setRandomColor(shoulder);
+		ModelShading.setRandomColor(elbow);
+		ModelShading.setRandomColor(wrist);
+		ModelShading.setRandomColor(finger);
 	}
 	else if ('r' == c) {
 		// Change the random color at each end of each segment of the robot arm.
-		ModelShading.setRainbowLineSegmentColors(shoulder_p.model);
-		ModelShading.setRainbowLineSegmentColors(elbow_p.model);
-		ModelShading.setRainbowLineSegmentColors(wrist_p.model);
-		ModelShading.setRainbowLineSegmentColors(finger_p.model);
+		ModelShading.setRainbowLineSegmentColors(shoulder);
 	}
 	else if ('R' == c) {
 		// Change the random color at each vertex of the robot arm.
@@ -197,25 +187,25 @@ function keyPressed(e){
 		const c3 = ModelShading.randomColor();
 		const c4 = ModelShading.randomColor();
 		const c5 = ModelShading.randomColor();
-		shoulder_p.model.colorList = [c1, c2];
-		elbow_p.model.colorList = [c2, c3];
-		wrist_p.model.colorList = [c3, c4];
-		finger_p.model.colorList = [c4, c5];
-		shoulder_p.model.lineSegmentList[0].setColors(0, 1);
-		elbow_p.model.lineSegmentList[0].setColors(0, 1);
-		wrist_p.model.lineSegmentList[0].setColors(0, 1);
-		finger_p.model.lineSegmentList[0].setColors(0, 1);
+		shoulder.colorList = [c1, c2];
+		   elbow.colorList = [c2, c3];
+		   wrist.colorList = [c3, c4];
+		  finger.colorList = [c4, c5];
+		shoulder.lineSegmentList[0].setColors(0, 1);
+		   elbow.lineSegmentList[0].setColors(0, 1);
+		   wrist.lineSegmentList[0].setColors(0, 1);
+		  finger.lineSegmentList[0].setColors(0, 1);
 	}
 	else if ('=' == c) {
 		shoulderRotation = 0.0;
-		elbowRotation = 0.0;
-		wristRotation = 0.0;
-		fingerRotation = 0.0;
+		   elbowRotation = 0.0;
+		   wristRotation = 0.0;
+		  fingerRotation = 0.0;
 
 		shoulderLength = 0.4;
-        elbowLength = 0.3;
-        wristLength = 0.2;
-        fingerLength = 0.1;
+           elbowLength = 0.3;
+           wristLength = 0.2;
+          fingerLength = 0.1;
 	}
 	else if ('s' == c) {
 		shoulderRotation += 2.0;
@@ -242,34 +232,17 @@ function keyPressed(e){
 		fingerRotation -= 2.0;
 	}
 
-	// Update the nested matrices for the sub models.
-	shoulder_p.matrix2Identity();
-	shoulder_p.matrix.mult(Matrix.translate(0, 0, -1));
-	shoulder_p.matrix.mult(Matrix.rotateZ(shoulderRotation));
-	shoulder_p.matrix.mult(Matrix.scale(shoulderLength,
-										shoulderLength,
-										1));
+	// Set the nested matrices for the sub models.
+	shoulder.nestedMatrix = Matrix.rotateZ(shoulderRotation);
 
-	elbow_p.matrix2Identity();
-	elbow_p.matrix.mult(Matrix.translate(1, 0, 0));
-	elbow_p.matrix.mult(Matrix.rotateZ(elbowRotation));
-	elbow_p.matrix.mult(Matrix.scale(elbowLength/shoulderLength,
-									 elbowLength/shoulderLength,
-									 1));
+	elbow.nestedMatrix = Matrix.translate(shoulderLength, 0, 0)
+						.timesMatrix(Matrix.rotateZ(elbowRotation));
 
-	wrist_p.matrix2Identity();
-	wrist_p.matrix.mult(Matrix.translate(1, 0, 0));
-	wrist_p.matrix.mult(Matrix.rotateZ(wristRotation));
-	wrist_p.matrix.mult(Matrix.scale(wristLength/elbowLength,
-									 wristLength/elbowLength,
-									 1));
+	wrist.nestedMatrix = Matrix.translate(elbowLength, 0, 0)
+						.timesMatrix(Matrix.rotateZ(wristRotation));
 
-	finger_p.matrix2Identity();
-	finger_p.matrix.mult(Matrix.translate(1, 0, 0));
-	finger_p.matrix.mult(Matrix.rotateZ(fingerRotation));
-	finger_p.matrix.mult(Matrix.scale(fingerLength/wristLength,
-									  fingerLength/wristLength,
-									  1));
+	finger.nestedMatrix = Matrix.translate(wristLength, 0, 0)
+						 .timesMatrix(Matrix.rotateZ(fingerRotation));
 
 	// Render again.
     display(true);

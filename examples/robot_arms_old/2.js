@@ -1,14 +1,11 @@
 import { Color } from "../../color/Color.js";
 import { FrameBuffer } from "../../framebuffer/FrameBuffer.js";
-import { Rasterize } from "../../pipeline/Rasterize.js";
-import { LineSegment } from "../../scene/LineSegment.js";
 import { Matrix } from "../../scene/Matrix.js";
-import { Model } from "../../scene/Model.js";
 import { ModelShading } from "../../scene/ModelShading.js";
 import { Position } from "../../scene/Position.js";
 import { Pipeline } from "../../pipeline/Pipeline.js";
 import { Scene } from "../../scene/Scene.js";
-import { Vertex } from "../../scene/Vertex.js";
+import { Arm } from "./Arm.js";
 
 /**
    Draw two interactive robot arms with
@@ -75,102 +72,63 @@ var wristLength2 = 0.2;
 var fingerLength1 = 0.1;
 var fingerLength2 = 0.1;
 
-var scene;
-var shoulder1_p;
-var shoulder2_p;
-var elbow1_p;
-var elbow2_p;
-var wrist1_p;
-var wrist2_p;
-var finger1_p;
-var finger2_p;
-
+// Create the Scene object that we shall render.
 var scene = new Scene();
 scene.camera.projOrthoReset();
 
-// Create Position objects that will hold the robot arms.
-shoulder1_p = new Position();
-shoulder2_p = new Position();
+// Create two Position objects that will each hold a robot arm.
+const arm1_p = new Position();
+const arm2_p = new Position();
 
 // Add the Position objects to the scene.
-scene.addPosition([shoulder1_p, shoulder2_p]);
+scene.addPosition([arm1_p, arm2_p]);
 
 // Push the positions away from where the camera is.
-shoulder1_p.matrix = Matrix.translate(xTranslation1, yTranslation1, -1);
-shoulder2_p.matrix = Matrix.translate(xTranslation2, yTranslation2, -1);
+arm1_p.matrix = Matrix.translate(xTranslation1, yTranslation1, -1);
+arm2_p.matrix = Matrix.translate(xTranslation2, yTranslation2, -1);
 
-/*
-    Create the scene graph.
-*/
-// Create one Model that can be used
-// for each part of the robot arms.
-const v0 = new Vertex(0, 0, 0);
-const v1 = new Vertex(1, 0, 0);
-const armSegment = new Model("arm segment");
-armSegment.addVertex([v0, v1]);
-armSegment.addLineSegment([new LineSegment(0, 1)]);
-ModelShading.setColor(armSegment, Color.Blue);
+// Create two robot arms.
+const arm1 = new Arm();
+const arm2 = new Arm();
+ModelShading.setColor(arm1, Color.Blue);
+ModelShading.setColor(arm2, Color.Red);
+// Add the arms to the scene's positions.
+arm1_p.model = arm1;
+arm2_p.model = arm2;
 
-/*
-   Create two robot arms.
-*/
-// First arm.
-shoulder1_p.model = armSegment;
+// Initialize the nested matrices for the sub models of arm1.
+arm1.nestedMatrix = Matrix.scale(shoulderLength1,
+								 shoulderLength1,
+								 1);
+arm1.elbow.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(elbowLength1/shoulderLength1,
+												  elbowLength1/shoulderLength1,
+												  1));
+arm1.wrist.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(wristLength1/elbowLength1,
+												  wristLength1/elbowLength1,
+												  1));
+arm1.finger.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(fingerLength1/wristLength1,
+												  fingerLength1/wristLength1,
+												  1));
 
-elbow1_p = new Position(armSegment);
-shoulder1_p.addNestedPosition([elbow1_p]);
-
-wrist1_p = new Position(armSegment);
-elbow1_p.addNestedPosition([wrist1_p]);
-
-finger1_p = new Position(armSegment);
-wrist1_p.addNestedPosition([finger1_p]);
-
-// Second arm.
-shoulder2_p.model = armSegment;
-
-elbow2_p = new Position(armSegment);
-shoulder2_p.addNestedPosition([elbow2_p]);
-
-wrist2_p = new Position(armSegment);
-elbow2_p.addNestedPosition([wrist2_p]);
-
-finger2_p = new Position(armSegment);
-wrist2_p.addNestedPosition([finger2_p]);
-
-// Initialize the nested matrices for the sub models.
-// First arm.
-shoulder1_p.matrix.mult(Matrix.scale(shoulderLength1,
-									 shoulderLength1,
-									 1));
-elbow1_p.matrix.mult(Matrix.translate(1, 0, 0));
-elbow1_p.matrix.mult(Matrix.scale(elbowLength1/shoulderLength1,
-								  elbowLength1/shoulderLength1,
-								  1));
-wrist1_p.matrix.mult(Matrix.translate(1, 0, 0));
-wrist1_p.matrix.mult(Matrix.scale(wristLength1/elbowLength1,
-								  wristLength1/elbowLength1,
-								  1));
-finger1_p.matrix.mult(Matrix.translate(1, 0, 0));
-finger1_p.matrix.mult(Matrix.scale(fingerLength1/wristLength1,
-								   fingerLength1/wristLength1,
-								   1));
-// Second arm.
-shoulder2_p.matrix.mult(Matrix.scale(shoulderLength2,
-									 shoulderLength2,
-									 1));
-elbow2_p.matrix.mult(Matrix.translate(1, 0, 0));
-elbow2_p.matrix.mult(Matrix.scale(elbowLength2/shoulderLength2,
-								  elbowLength2/shoulderLength2,
-								  1));
-wrist2_p.matrix.mult(Matrix.translate(1, 0, 0));
-wrist2_p.matrix.mult(Matrix.scale(wristLength2/elbowLength2,
-								  wristLength2/elbowLength2,
-								  1));
-finger2_p.matrix.mult(Matrix.translate(1, 0, 0));
-finger2_p.matrix.mult(Matrix.scale(fingerLength2/wristLength2,
-								   fingerLength2/wristLength2,
-								   1));
+// Initialize the nested matrices for the sub models of arm2.
+arm2.nestedMatrix = Matrix.scale(shoulderLength2,
+								 shoulderLength2,
+								 1);
+arm2.elbow.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(elbowLength2/shoulderLength2,
+												  elbowLength2/shoulderLength2,
+												  1));
+arm2.wrist.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(wristLength2/elbowLength2,
+												  wristLength2/elbowLength2,
+												  1));
+arm2.finger.nestedMatrix = Matrix.translate(1, 0, 0)
+						.timesMatrix(Matrix.scale(fingerLength2/wristLength2,
+												  fingerLength2/wristLength2,
+												  1));
 
 print_help_message();
 display(true);
@@ -214,41 +172,54 @@ function keyPressed(e){
 	// }
 	else if ('c' == c) {
 		// Change the solid random color of the robot arm.
-		const color = ModelShading.randomColor();
-		ModelShading.setColor(shoulder1_p.model, color);
-		ModelShading.setColor(elbow1_p.model, color);
-		ModelShading.setColor(wrist1_p.model, color);
-		ModelShading.setColor(finger1_p.model, color);
+		ModelShading.setRandomColor(arm1);
+		ModelShading.setRandomColor(arm2);
 	}
 	else if ('C' == c) {
 		// Change the solid random color of each segment of the robot arm.
-		ModelShading.setRandomColor(shoulder1_p.model);
-		ModelShading.setRandomColor(elbow1_p.model);
-		ModelShading.setRandomColor(wrist1_p.model);
-		ModelShading.setRandomColor(finger1_p.model);
+         ModelShading.setRandomColor(arm1);
+         ModelShading.setRandomColor(arm1.elbow);
+         ModelShading.setRandomColor(arm1.wrist);
+         ModelShading.setRandomColor(arm1.finger);
+         ModelShading.setRandomColor(arm2);
+         ModelShading.setRandomColor(arm2.elbow);
+         ModelShading.setRandomColor(arm2.wrist);
+         ModelShading.setRandomColor(arm2.finger);
 	}
 	else if ('r' == c) {
 		// Change the random color at each end of each segment of the robot arm.
-		ModelShading.setRainbowLineSegmentColors(shoulder1_p.model);
-		ModelShading.setRainbowLineSegmentColors(elbow1_p.model);
-		ModelShading.setRainbowLineSegmentColors(wrist1_p.model);
-		ModelShading.setRainbowLineSegmentColors(finger1_p.model);
+         ModelShading.setRainbowLineSegmentColors(arm1);
+         ModelShading.setRainbowLineSegmentColors(arm2);
 	}
 	else if ('R' == c) {
 		// Change the random color at each vertex of the robot arm.
-		const c1 = ModelShading.randomColor();
-		const c2 = ModelShading.randomColor();
-		const c3 = ModelShading.randomColor();
-		const c4 = ModelShading.randomColor();
-		const c5 = ModelShading.randomColor();
-		shoulder1_p.model.colorList = [c1, c2];
-		   elbow1_p.model.colorList = [c2, c3];
-		   wrist1_p.model.colorList = [c3, c4];
-		  finger1_p.model.colorList = [c4, c5];
-		shoulder1_p.model.lineSegmentList[0].setColors(0, 1);
-		   elbow1_p.model.lineSegmentList[0].setColors(0, 1);
-		   wrist1_p.model.lineSegmentList[0].setColors(0, 1);
-		  finger1_p.model.lineSegmentList[0].setColors(0, 1);
+		var c1 = ModelShading.randomColor();
+		var c2 = ModelShading.randomColor();
+		var c3 = ModelShading.randomColor();
+		var c4 = ModelShading.randomColor();
+		var c5 = ModelShading.randomColor();
+			   arm1.colorList = [c1, c2];
+		 arm1.elbow.colorList = [c2, c3];
+		 arm1.wrist.colorList = [c3, c4];
+		arm1.finger.colorList = [c4, c5];
+			   arm1.lineSegmentList[0].setColors(0, 1);
+		 arm1.elbow.lineSegmentList[0].setColors(0, 1);
+		 arm1.wrist.lineSegmentList[0].setColors(0, 1);
+		arm1.finger.lineSegmentList[0].setColors(0, 1);
+		
+		c1 = ModelShading.randomColor();
+		c2 = ModelShading.randomColor();
+		c3 = ModelShading.randomColor();
+		c4 = ModelShading.randomColor();
+		c5 = ModelShading.randomColor();
+			   arm2.colorList = [c1, c2];
+		 arm2.elbow.colorList = [c2, c3];
+		 arm2.wrist.colorList = [c3, c4];
+		arm2.finger.colorList = [c4, c5];
+			   arm2.lineSegmentList[0].setColors(0, 1);
+		 arm2.elbow.lineSegmentList[0].setColors(0, 1);
+		 arm2.wrist.lineSegmentList[0].setColors(0, 1);
+		arm2.finger.lineSegmentList[0].setColors(0, 1);
 	}
 	else if ('=' == c) {
 		xTranslation1 =  0.0;
@@ -398,67 +369,57 @@ function keyPressed(e){
 		}
 	}
 
-	// Update the nested matrices for the sub models.
-	// First arm.
-	shoulder1_p.matrix2Identity();
-	shoulder1_p.matrix.mult(Matrix.translate(xTranslation1,
-											 yTranslation1,
-											 -1));
-	shoulder1_p.matrix.mult(Matrix.rotateZ(shoulderRotation1));
-	shoulder1_p.matrix.mult(Matrix.scale(shoulderLength1,
-										 shoulderLength1,
-										 1));
+	// Push the positions away from where the camera is.
+	arm1_p.matrix = Matrix.translate(xTranslation1, yTranslation1, -1);
+	arm2_p.matrix = Matrix.translate(xTranslation2, yTranslation2, -1);
 
-	elbow1_p.matrix2Identity();
-	elbow1_p.matrix.mult(Matrix.translate(1, 0, 0));
-	elbow1_p.matrix.mult(Matrix.rotateZ(elbowRotation1));
-	elbow1_p.matrix.mult(Matrix.scale(elbowLength1/shoulderLength1,
-									  elbowLength1/shoulderLength1,
-									  1));
+	// Set the nested matrices for the sub models of arm1.
+	arm1.nestedMatrix = Matrix.rotateZ(shoulderRotation1)
+					   .timesMatrix(Matrix.scale(shoulderLength1,
+										    	 shoulderLength1,
+										    	 1));
 
-	wrist1_p.matrix2Identity();
-	wrist1_p.matrix.mult(Matrix.translate(1, 0, 0));
-	wrist1_p.matrix.mult(Matrix.rotateZ(wristRotation1));
-	wrist1_p.matrix.mult(Matrix.scale(wristLength1/elbowLength1,
-									  wristLength1/elbowLength1,
-									  1));
+	arm1.elbow.nestedMatrix = Matrix.translate(1, 0, 0)
+							 .timesMatrix(Matrix.rotateZ(elbowRotation1))
+							 .timesMatrix(Matrix.scale(elbowLength1/shoulderLength1,
+													   elbowLength1/shoulderLength1,
+													   1));
 
-	finger1_p.matrix2Identity();
-	finger1_p.matrix.mult(Matrix.translate(1, 0, 0));
-	finger1_p.matrix.mult(Matrix.rotateZ(fingerRotation1));
-	finger1_p.matrix.mult(Matrix.scale(fingerLength1/wristLength1,
-									   fingerLength1/wristLength1,
-									   1));
-	// Second arm.
-	shoulder2_p.matrix2Identity();
-	shoulder2_p.matrix.mult(Matrix.translate(xTranslation2,
-											 yTranslation2,
-											 -1));
-	shoulder2_p.matrix.mult(Matrix.rotateZ(shoulderRotation2));
-	shoulder2_p.matrix.mult(Matrix.scale(shoulderLength2,
-										 shoulderLength2,
-										 1));
+	arm1.wrist.nestedMatrix = Matrix.translate(1, 0, 0)
+							 .timesMatrix(Matrix.rotateZ(wristRotation1))
+							 .timesMatrix(Matrix.scale(wristLength1/elbowLength1,
+													   wristLength1/elbowLength1,
+													   1));
 
-	elbow2_p.matrix2Identity();
-	elbow2_p.matrix.mult(Matrix.translate(1, 0, 0));
-	elbow2_p.matrix.mult(Matrix.rotateZ(elbowRotation2));
-	elbow2_p.matrix.mult(Matrix.scale(elbowLength2/shoulderLength2,
-									  elbowLength2/shoulderLength2,
-									  1));
+	arm1.finger.nestedMatrix = Matrix.translate(1, 0, 0)
+							  .timesMatrix(Matrix.rotateZ(fingerRotation1))
+							  .timesMatrix(Matrix.scale(fingerLength1/wristLength1,
+													    fingerLength1/wristLength1,
+													    1));
 
-	wrist2_p.matrix2Identity();
-	wrist2_p.matrix.mult(Matrix.translate(1, 0, 0));
-	wrist2_p.matrix.mult(Matrix.rotateZ(wristRotation2));
-	wrist2_p.matrix.mult(Matrix.scale(wristLength2/elbowLength2,
-									  wristLength2/elbowLength2,
-									  1));
+	// Set the nested matrices for the sub models of arm2.
+	arm2.nestedMatrix = Matrix.rotateZ(shoulderRotation2)
+					   .timesMatrix(Matrix.scale(shoulderLength2,
+										  		 shoulderLength2,
+										  		 1));
 
-	finger2_p.matrix2Identity();
-	finger2_p.matrix.mult(Matrix.translate(1, 0, 0));
-	finger2_p.matrix.mult(Matrix.rotateZ(fingerRotation2));
-	finger2_p.matrix.mult(Matrix.scale(fingerLength2/wristLength2,
-									   fingerLength2/wristLength2,
-									   1));
+	arm2.elbow.nestedMatrix = Matrix.translate(1, 0, 0)
+							 .timesMatrix(Matrix.rotateZ(elbowRotation2))
+							 .timesMatrix(Matrix.scale(elbowLength2/shoulderLength2,
+													   elbowLength2/shoulderLength2,
+													   1));
+
+	arm2.wrist.nestedMatrix = Matrix.translate(1, 0, 0)
+							 .timesMatrix(Matrix.rotateZ(wristRotation2))
+							 .timesMatrix(Matrix.scale(wristLength2/elbowLength2,
+													   wristLength2/elbowLength2,
+													   1));
+
+	arm2.finger.nestedMatrix = Matrix.translate(1, 0, 0)
+							  .timesMatrix(Matrix.rotateZ(fingerRotation2))
+							  .timesMatrix(Matrix.scale(fingerLength2/wristLength2,
+													    fingerLength2/wristLength2,
+													    1));
 
 	// Render again.
     display(true);
