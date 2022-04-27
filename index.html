@@ -14,12 +14,20 @@
 				align-items: center;
 			}
 				#section div {
-					display: inline-block;
-					font-size: xx-large;
-					padding: 150px 0;
+					border-top: 3px solid black;
+					border-bottom: 3px solid black;
+					border-left: 3px solid black;
 					width: 100%;
-					text-align: center;
+					height: 100%;
 					cursor: pointer;
+					display: flex;
+					align-items: center;
+					justify-content: center;
+					text-align: center;
+					font-size: xx-large;
+				}
+				#section div:last-of-type {
+					border-right: 3px solid black;
 				}
 		</style>
 	</head>
@@ -29,7 +37,7 @@
 		<div id="section">
 			<div style="background-color: lightcoral;" onclick="location.href = 'main.html';">Main Project</div>
 			<div style="background-color: olivedrab;" onclick="location.href = 'examples/';">Examples</div>
-			<div style="background-color: gold;" onclick="location.href = 'Geometries_R9.html';">Geometries_R9</div>
+			<div style="background-color: gold;" onclick="location.href = 'Geometries_R9.html';">Geometries</div>
 			<div style="background-color: cornflowerblue;" onclick="location.href = 'SierpinskiMovie.html';">Sierpinski Movie</div>
 			<div style="background-color: orangered;" onclick="location.href = 'SierpinskiMovie2.html';">Sierpinski Movie 2</div>
 		</div>
