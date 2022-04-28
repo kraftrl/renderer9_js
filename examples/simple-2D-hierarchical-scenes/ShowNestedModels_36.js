@@ -36,12 +36,12 @@ scene.camera.projPerspective(left, right, bottom, top, near);
 
 scene.addPosition([new Position(m4)]);
 
-for (let i = 0; i < 1; i++) {
+for (let i = 0; i < 8; i++) {
   const nestedPosition = new Position();
   nestedPosition.model = m4;
   nestedPosition.matrix = Matrix.rotateZ(i*45);
   nestedPosition.matrix.mult( Matrix.translate(0, -11, 0) );
-  nestedPosition.matrix.mult( Matrix.scale(0.5) );
+  nestedPosition.matrix.mult( Matrix.scaleConst(0.5) );
   scene.getPosition(0).addNestedPosition( [nestedPosition] );
 }
 
