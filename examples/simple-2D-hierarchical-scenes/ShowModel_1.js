@@ -55,7 +55,7 @@ ModelShading.setColor(scene.getPosition(0).model, Color.Black);
 
 // Setup a variabls for animation
 let frame = 0;
-let fps = 20;
+let fps = 30;
 let timer;
 
 // Setup timer
